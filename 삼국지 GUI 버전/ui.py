@@ -18,6 +18,32 @@ TEXT = (235, 230, 210)
 HIGHLIGHT = (255, 220, 110)
 MUTED = (160, 170, 180)
 
+# ==============================
+# UI 레이아웃
+# ==============================
+
+UI_MARGIN = 16
+
+HEADER_HEIGHT = 56
+CITY_INFO_HEIGHT = 80
+MAIN_MENU_HEIGHT = 84
+
+
+def get_centered_position(
+    screen,
+    width,
+    height,
+):
+
+    x = (
+        screen.get_width() - width
+    ) // 2
+
+    y = (
+        screen.get_height() - height
+    ) // 2
+
+    return x, y
 
 # ==============================
 # 기본 그리기 함수
@@ -116,12 +142,19 @@ def draw_header(
     month,
     ap,
 ):
+
+    x = UI_MARGIN
+    y = UI_MARGIN
+
+    width = (screen.get_width() - UI_MARGIN * 2) 
+    height = HEADER_HEIGHT
+    
     draw_panel(
         screen,
-        10,
-        10,
-        620,
-        45,
+        x,
+        y,
+        width,
+        height,
     )
 
     # 게임 제목
@@ -129,8 +162,8 @@ def draw_header(
         screen,
         font,
         "三國志",
-        25,
-        23,
+        x + 20,
+        y + 17,
         HIGHLIGHT,
     )
 
@@ -139,7 +172,7 @@ def draw_header(
         screen,
         font,
         f"{year}년 {month}월",
-        (200, 10, 240, 45),
+        (x, y, width, height),
     )
 
     # 행동력
@@ -147,8 +180,8 @@ def draw_header(
         screen,
         font,
         f"행동력 : {ap}",
-        510,
-        23,
+        x + width - 150,
+        y + 17,
     )
 
 
@@ -161,10 +194,10 @@ def draw_city_panel(
     font,
     city,
 ):
-    x = 10
-    y = 60
-    width = 360
-    height = 270
+    x = UI_MARGIN
+    y = 100
+    width = 620
+    height = 420
 
     draw_panel(
         screen,
@@ -179,7 +212,7 @@ def draw_city_panel(
         screen,
         font,
         "도 시 정 보",
-        (x, y + 5, width, 30),
+        (x, y + 15, width, 35),
         HIGHLIGHT,
     )
 
@@ -188,28 +221,34 @@ def draw_city_panel(
         screen,
         font,
         f"도시 : {city['name']}",
-        x + 20,
-        y + 45,
+        x + 30,
+        y + 65,
     )
 
     # 구분선
     pygame.draw.line(
         screen,
         BORDER,
-        (x + 15, y + 75),
-        (x + width - 15, y + 75),
+        (x + 25, y + 105),
+        (x + width - 25, y + 105),
         1,
     )
 
     # 왼쪽 열
-    left_x = x + 20
+    left_x = x + 40
+    right_x = x + 330
+
+    row1 = y + 140
+    row2 = y + 190
+    row3 = y + 240
+    row4 = y + 290
 
     draw_text(
         screen,
         font,
         f"인구 : {city['population']:,}",
         left_x,
-        y + 95,
+        row1,
     )
 
     draw_text(
@@ -217,7 +256,7 @@ def draw_city_panel(
         font,
         f"금   : {city['gold']:,}",
         left_x,
-        y + 125,
+        row2,
     )
 
     draw_text(
@@ -225,7 +264,7 @@ def draw_city_panel(
         font,
         f"식량 : {city['food']:,}",
         left_x,
-        y + 155,
+        row3,
     )
 
     draw_text(
@@ -233,18 +272,15 @@ def draw_city_panel(
         font,
         f"치안 : {city['public_order']}",
         left_x,
-        y + 185,
+        row4,
     )
-
-    # 오른쪽 열
-    right_x = x + 195
 
     draw_text(
         screen,
         font,
         f"농업 : {city['agriculture']}",
         right_x,
-        y + 95,
+        row1,
     )
 
     draw_text(
@@ -252,7 +288,7 @@ def draw_city_panel(
         font,
         f"상업 : {city['commerce']}",
         right_x,
-        y + 125,
+        row2,
     )
 
     draw_text(
@@ -260,7 +296,7 @@ def draw_city_panel(
         font,
         f"병력 : {city['troops']:,}",
         right_x,
-        y + 155,
+        row3,
     )
 
     draw_text(
@@ -268,7 +304,7 @@ def draw_city_panel(
         font,
         f"훈련 : {city['training']}",
         right_x,
-        y + 185,
+        row4,
     )
 
 
@@ -281,10 +317,12 @@ def draw_governor_panel(
     font,
     governor,
 ):
-    x = 375
-    y = 60
-    width = 255
-    height = 270
+
+    width = 330
+    height = 420
+
+    x = (screen.get_width() - UI_MARGIN - width)
+    y = 100
 
     draw_panel(
         screen,
@@ -298,7 +336,7 @@ def draw_governor_panel(
         screen,
         font,
         "통 치 자",
-        (x, y + 5, width, 30),
+        (x, y + 15, width, 35),
         HIGHLIGHT,
     )
 
@@ -306,7 +344,7 @@ def draw_governor_panel(
         screen,
         font,
         governor,
-        (x, y + 60, width, 35),
+        (x, y + 100, width, 50),
     )
 
 # ==============================
@@ -319,10 +357,21 @@ def draw_main_menu(
     menu_items,
     selected_menu,
 ):
-    x = 10
-    y = 335
-    width = 620
-    height = 55
+
+    x = UI_MARGIN
+
+    width = (
+        screen.get_width()
+        - UI_MARGIN * 2
+    )
+
+    height = MAIN_MENU_HEIGHT
+
+    y = (
+        screen.get_height()
+        - height
+        - UI_MARGIN
+    )
 
     draw_panel(
         screen,
@@ -332,17 +381,25 @@ def draw_main_menu(
         height,
     )
 
-    slot_width = (width - 20) // len(menu_items)
+    slot_width = (
+        width - 20
+    ) // len(menu_items)
 
-    for index, item in enumerate(menu_items):
+    for index, item in enumerate(
+        menu_items
+    ):
 
-        slot_x = x + 10 + index * slot_width
+        slot_x = (
+            x
+            + 10
+            + index * slot_width
+        )
 
         slot_rect = pygame.Rect(
             slot_x,
-            y + 5,
+            y + 10,
             slot_width,
-            height - 10,
+            height - 20,
         )
 
         if index == selected_menu:
@@ -360,7 +417,6 @@ def draw_main_menu(
             color,
         )
 
-
 # ==============================
 # 내정 메뉴
 # ==============================
@@ -371,10 +427,10 @@ def draw_domestic_menu(
     domestic_items,
     selected_domestic,
 ):
-    x = 190
-    y = 95
-    width = 260
-    height = 210
+
+    width = 340
+    height = 280
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -421,7 +477,7 @@ def draw_domestic_menu(
         screen,
         font,
         "ESC : 돌아가기",
-        (x, y + 175, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )
 
@@ -437,7 +493,7 @@ def draw_popup(
 ):
     lines = message.split("\n")
 
-    width = 320
+    width = 440
 
     # 메시지 줄 수에 따라 높이 자동 조정
     height = max(
@@ -513,10 +569,10 @@ def draw_military_menu(
     military_items,
     selected_military,
 ):
-    x = 180
-    y = 75
-    width = 280
-    height = 275 
+
+    width = 360
+    height = 330 
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -577,10 +633,10 @@ def draw_recruit_menu(
     city,
     recruit_count,
 ):
-    x = 160
-    y = 90
-    width = 320
-    height = 220
+    
+    width = 400
+    height = 300
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -639,15 +695,15 @@ def draw_recruit_menu(
         MUTED,
     )
 
-    # ==============================
+# ==============================
 # 지도 설정
 # ==============================
 
-MAP_LEFT = 100
-MAP_TOP = 85
+MAP_LEFT = 200
+MAP_TOP = 170
 
-MAP_X_GAP = 180
-MAP_Y_GAP = 75
+MAP_X_GAP = 280
+MAP_Y_GAP = 120
 
 
 # ==============================
@@ -679,6 +735,16 @@ def draw_map(
     current_city,
 ):
 
+    x = UI_MARGIN
+    y = 84
+
+    width = (
+        screen.get_width()
+        - UI_MARGIN * 2
+    )
+
+    height = 470
+
     city_lookup = {
         city["name"]: city
         for city in cities
@@ -686,10 +752,10 @@ def draw_map(
 
     draw_panel(
         screen,
-        10,
-        60,
-        620,
-        210,
+        x,
+        y,
+        width,
+        height,
     )
 
 
@@ -796,10 +862,15 @@ def draw_selected_city_info(
     else:
         faction_text = faction
 
-    x = 10
-    y = 275
-    width = 620
-    height = 55
+    x = UI_MARGIN
+    y = 566
+
+    width = (
+        screen.get_width()
+        - UI_MARGIN * 2
+    )
+
+    height = 90
 
     draw_panel(
         screen,
@@ -809,12 +880,14 @@ def draw_selected_city_info(
         height,
     )
 
+    # 첫 번째 줄
+
     draw_text(
         screen,
         font,
         f"도시 : {city['name']}",
-        25,
-        285,
+        x + 20,
+        y + 18,
         HIGHLIGHT,
     )
 
@@ -822,64 +895,66 @@ def draw_selected_city_info(
         screen,
         font,
         f"통치자 : {governor_text}",
-        130,
-        285,
-    )
-
-    draw_text(
-        screen,
-        font,
-        f"세력 : {faction_text}",
-        520,
-        308,
+        x + 180,
+        y + 18,
     )
 
     draw_text(
         screen,
         font,
         f"병력 : {city['troops']:,}",
-        290,
-        285,
+        x + 410,
+        y + 18,
     )
 
     draw_text(
         screen,
         font,
         f"금 : {city['gold']:,}",
-        440,
-        285,
+        x + 650,
+        y + 18,
     )
+
+    # 두 번째 줄
 
     draw_text(
         screen,
         font,
         f"식량 : {city['food']:,}",
-        25,
-        308,
+        x + 20,
+        y + 52,
     )
 
     draw_text(
         screen,
         font,
         f"치안 : {city['public_order']}",
-        180,
-        308,
+        x + 190,
+        y + 52,
     )
 
     draw_text(
         screen,
         font,
         f"농업 : {city['agriculture']}",
-        300,
-        308,
+        x + 340,
+        y + 52,
     )
 
     draw_text(
         screen,
         font,
         f"상업 : {city['commerce']}",
-        420,
-        308,
+        x + 490,
+        y + 52,
+    )
+
+    draw_text(
+        screen,
+        font,
+        f"세력 : {faction_text}",
+        x + 650,
+        y + 52,
     )
 
 # ==============================
@@ -893,10 +968,9 @@ def draw_sortie_target_menu(
     selected_target,
 ):
 
-    x = 190
-    y = 95
-    width = 260
-    height = 210
+    width = 420
+    height = 320
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -911,7 +985,7 @@ def draw_sortie_target_menu(
         screen,
         font,
         "출 진",
-        (x, y + 10, width, 30),
+        (x, y + height - 50, width, 30),
         HIGHLIGHT,
     )
 
@@ -941,7 +1015,7 @@ def draw_sortie_target_menu(
         screen,
         font,
         "Enter : 선택   ESC : 취소",
-        (x, y + 175, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )
 
@@ -957,10 +1031,9 @@ def draw_sortie_troops_menu(
     sortie_troops,
 ):
 
-    x = 160
-    y = 90
-    width = 320
-    height = 220
+    width = 400
+    height = 300
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -975,7 +1048,7 @@ def draw_sortie_troops_menu(
         screen,
         font,
         "출 진",
-        (x, y + 10, width, 30),
+        (x, y + 15, width, 35),
         HIGHLIGHT,
     )
 
@@ -983,31 +1056,31 @@ def draw_sortie_troops_menu(
         screen,
         font,
         f"출발 도시 : {city['name']}",
-        x + 45,
-        y + 55,
+        x + 65,
+        y + 75,
     )
 
     draw_text(
         screen,
         font,
         f"목표 도시 : {target_city['name']}",
-        x + 45,
-        y + 80,
+        x + 65,
+        y + 110,
     )
 
     draw_text(
         screen,
         font,
         f"현재 병력 : {city['troops']:,}",
-        x + 45,
-        y + 105,
+        x + 65,
+        y + 145,
     )
 
     draw_centered_text(
         screen,
         font,
         f"<  {sortie_troops:,}명  >",
-        (x, y + 130, width, 35),
+        (x, y + 185, width, 40),
         HIGHLIGHT,
     )
 
@@ -1015,7 +1088,7 @@ def draw_sortie_troops_menu(
         screen,
         font,
         "← → : 병력 변경",
-        (x, y + 165, width, 25),
+        (x, y + 235, width, 30),
         MUTED,
     )
 
@@ -1023,7 +1096,7 @@ def draw_sortie_troops_menu(
         screen,
         font,
         "Enter : 출진   ESC : 취소",
-        (x, y + 190, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )
 
@@ -1039,10 +1112,9 @@ def draw_governor_select_menu(
     selected_governor,
 ):
 
-    x = 170
-    y = 80
-    width = 300
-    height = 240
+    width = 440
+    height = 380
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -1057,7 +1129,7 @@ def draw_governor_select_menu(
         screen,
         font,
         "통 치 자 임 명",
-        (x, y + 10, width, 30),
+        (x, y + 15, width, 35),
         HIGHLIGHT,
     )
 
@@ -1065,10 +1137,10 @@ def draw_governor_select_menu(
         screen,
         font,
         f"{city['name']} 통치자",
-        (x, y + 40, width, 25),
+        (x, y + 55, width, 30),
     )
 
-    menu_y = y + 75
+    menu_y = y + 105
 
     for index, officer_data in enumerate(
         candidates
@@ -1085,18 +1157,18 @@ def draw_governor_select_menu(
             screen,
             font,
             prefix + officer_data["name"],
-            x + 80,
+            x + 120,
             menu_y,
             color,
         )
 
-        menu_y += 28
+        menu_y += 38
 
     draw_centered_text(
         screen,
         font,
         "↑ ↓ : 선택   Enter : 임명",
-        (x, y + 205, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )    
 
@@ -1111,10 +1183,9 @@ def draw_transport_target_menu(
     selected_target,
 ):
 
-    x = 190
-    y = 95
-    width = 260
-    height = 210
+    width = 400
+    height = 300
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -1129,7 +1200,7 @@ def draw_transport_target_menu(
         screen,
         font,
         "병 력 이 동",
-        (x, y + 10, width, 30),
+        (x, y + height - 50, width, 30),
         HIGHLIGHT,
     )
 
@@ -1159,7 +1230,7 @@ def draw_transport_target_menu(
         screen,
         font,
         "Enter : 선택   ESC : 취소",
-        (x, y + 175, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )
 
@@ -1174,11 +1245,10 @@ def draw_transport_troops_menu(
     target_city,
     move_troops,
 ):
-
-    x = 160
-    y = 90
-    width = 320
-    height = 220
+    
+    width = 460
+    height = 340
+    x, y = get_centered_position(screen, width, height)
 
     draw_panel(
         screen,
@@ -1193,7 +1263,7 @@ def draw_transport_troops_menu(
         screen,
         font,
         "병 력 이 동",
-        (x, y + 10, width, 30),
+        (x, y + 15, width, 35),
         HIGHLIGHT,
     )
 
@@ -1201,31 +1271,31 @@ def draw_transport_troops_menu(
         screen,
         font,
         f"출발 도시 : {city['name']}",
-        x + 45,
-        y + 55,
+        x + 65,
+        y + 75,
     )
 
     draw_text(
         screen,
         font,
         f"도착 도시 : {target_city['name']}",
-        x + 45,
-        y + 80,
+        x + 65,
+        y + 110,
     )
 
     draw_text(
         screen,
         font,
         f"현재 병력 : {city['troops']:,}",
-        x + 45,
-        y + 105,
+        x + 65,
+        y + 145,
     )
 
     draw_centered_text(
         screen,
         font,
         f"<  {move_troops:,}명  >",
-        (x, y + 130, width, 35),
+        (x, y + 185, width, 40),
         HIGHLIGHT,
     )
 
@@ -1233,7 +1303,7 @@ def draw_transport_troops_menu(
         screen,
         font,
         "← → : 병력 변경",
-        (x, y + 165, width, 25),
+        (x, y + 235, width, 30),
         MUTED,
     )
 
@@ -1241,6 +1311,6 @@ def draw_transport_troops_menu(
         screen,
         font,
         "Enter : 이동   ESC : 취소",
-        (x, y + 190, width, 25),
+        (x, y + height - 50, width, 30),
         MUTED,
     )

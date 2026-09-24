@@ -13,19 +13,34 @@ import officer
 
 pygame.init()
 
-WIDTH = 640
-HEIGHT = 400
+# ==============================
+# 화면 설정
+# ==============================
 
-PLAYER_FACTION = "촉"
+BASE_WIDTH = 1024
+BASE_HEIGHT = 768
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+WINDOW_WIDTH = 1024
+WINDOW_HEIGHT = 768
+
+# 실제 윈도우
+window = pygame.display.set_mode(
+    (WINDOW_WIDTH, WINDOW_HEIGHT),
+    pygame.RESIZABLE,
+)
+
+# 게임은 항상 이 크기에 그린다.
+screen = pygame.Surface(
+    (BASE_WIDTH, BASE_HEIGHT)
+)
+
 pygame.display.set_caption("삼국지")
 
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont(
     "malgungothic",
-    16,
+    20,
 )
 
 
@@ -38,7 +53,7 @@ month = constants.START_MONTH
 
 current_city = city.default_city
 selected_city = city.cities.index(current_city)
-
+PLAYER_FACTION = "촉"
 
 # ==============================
 # 메인 메뉴
@@ -1179,11 +1194,27 @@ while running:
             selected_governor,
         )
 
+    # ==============================
+    # 실제 창 크기에 맞춰 확대/축소
+    # ==============================
+    window_width, window_height = (window.get_size())
+
+    scale = min(window_width/BASE_WIDTH, window_height/BASE_HEIGHT)
+    scaled_width = max(1, int(BASE_WIDTH * scale))
+    scaled_height = max(1, int(BASE_HEIGHT * scale))
+    scaled_screen = pygame.transform.smoothscale(screen, (scaled_width, scaled_height),)
+
+    # 남는 영역
+    window.fill((0, 0, 0))
+
+    offset_x = (window_width - scaled_width) // 2
+    offset_y = (window_height - scaled_height) // 2
+    window.blit(scaled_screen, (offset_x, offset_y),)
 
     # ==============================
     # 3. 화면 갱신
     # ==============================
-
+    
     pygame.display.flip()
 
 
