@@ -1042,7 +1042,7 @@ def draw_sortie_target_menu(
 ):
 
     width = 420
-    height = 320
+    height = 340
     x, y = get_centered_position(screen, width, height)
 
     draw_panel(
@@ -1058,7 +1058,7 @@ def draw_sortie_target_menu(
         screen,
         font,
         "출 진",
-        (x, y + height - 50, width, 30),
+        (x, y + 15, width, 30),
         HIGHLIGHT,
     )
 
@@ -1088,7 +1088,7 @@ def draw_sortie_target_menu(
         screen,
         font,
         "Enter : 선택   ESC : 취소",
-        (x, y + height - 50, width, 30),
+        (x, y + height - 45, width, 30),
         MUTED,
     )
 
@@ -1105,7 +1105,7 @@ def draw_sortie_troops_menu(
 ):
 
     width = 400
-    height = 300
+    height = 340
     x, y = get_centered_position(screen, width, height)
 
     draw_panel(
@@ -1184,10 +1184,14 @@ def draw_governor_select_menu(
     candidates,
     selected_governor,
 ):
-
     width = 440
-    height = 380
-    x, y = get_centered_position(screen, width, height)
+    height = 460
+
+    x, y = get_centered_position(
+        screen,
+        width,
+        height,
+    )
 
     draw_panel(
         screen,
@@ -1197,6 +1201,10 @@ def draw_governor_select_menu(
         height,
         fill_color=PANEL_ALT_BG,
     )
+
+    # ==============================
+    # 제목
+    # ==============================
 
     draw_centered_text(
         screen,
@@ -1213,13 +1221,52 @@ def draw_governor_select_menu(
         (x, y + 55, width, 30),
     )
 
-    menu_y = y + 105
+    # ==============================
+    # 페이지 설정
+    # ==============================
+
+    PAGE_SIZE = 8
+
+    current_page = (
+        selected_governor
+        // PAGE_SIZE
+    )
+
+    total_pages = (
+        len(candidates)
+        + PAGE_SIZE
+        - 1
+    ) // PAGE_SIZE
+
+    start = (
+        current_page
+        * PAGE_SIZE
+    )
+
+    end = (
+        start
+        + PAGE_SIZE
+    )
+
+    visible_candidates = (
+        candidates[start:end]
+    )
+
+    # ==============================
+    # 장수 목록
+    # ==============================
+
+    menu_y = y + 100
 
     for index, officer_data in enumerate(
-        candidates
+        visible_candidates
     ):
+        real_index = (
+            start
+            + index
+        )
 
-        if index == selected_governor:
+        if real_index == selected_governor:
             prefix = "> "
             color = HIGHLIGHT
         else:
@@ -1229,21 +1276,52 @@ def draw_governor_select_menu(
         draw_text(
             screen,
             font,
-            prefix + officer_data["name"],
+            (
+                f"{prefix}"
+                f"{officer_data['name']}  "
+                f"통솔 {officer_data['leadership']}  "
+                f"정치 {officer_data['politics']}"
+            ),
             x + 120,
             menu_y,
             color,
         )
 
-        menu_y += 38
+        menu_y += 32
+
+    # ==============================
+    # 페이지 표시
+    # ==============================
+
+    draw_centered_text(
+        screen,
+        font,
+        f"{current_page + 1} / {total_pages}",
+        (
+            x,
+            y + height - 95,
+            width,
+            25,
+        ),
+        MUTED,
+    )
+
+    # ==============================
+    # 조작 안내
+    # ==============================
 
     draw_centered_text(
         screen,
         font,
         "↑ ↓ : 선택   Enter : 임명",
-        (x, y + height - 50, width, 30),
+        (
+            x,
+            y + height - 55,
+            width,
+            30,
+        ),
         MUTED,
-    )    
+    )
 
 # ==============================
 # 병력 이동 대상 선택
