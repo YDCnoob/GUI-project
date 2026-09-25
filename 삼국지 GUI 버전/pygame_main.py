@@ -274,10 +274,7 @@ while running:
 
                     elif selected_item == "정보":
 
-                        popup_message = (
-                            "정보\n"
-                            "아직 GUI 연결 전입니다."
-                        )
+                        current_menu = "info"
 
                     # ======================
                     # 턴 종료
@@ -341,6 +338,15 @@ while running:
                     current_city,
                     domestic_items,
                     selected_domestic
+                )
+
+            # ==============================
+            # 정보 화면
+            # ==============================
+
+            elif current_menu == "info":
+                current_menu = main.info_menu.handle_info_menu(
+                    event
                 )
 
             # ==============================
@@ -528,6 +534,26 @@ while running:
             font,
             menu_items,
             selected_menu,
+        )
+
+    # ==============================
+    # 정보 화면
+    # ==============================
+
+    if (
+        current_menu == "info"
+        and popup_message is None
+    ):
+        governor_data = officer.find_officer(
+            current_city["governor"]
+        )
+
+        ui.draw_info_menu(
+            screen,
+            font,
+            current_city,
+            governor_data,
+            faction,
         )
 
     # ==============================

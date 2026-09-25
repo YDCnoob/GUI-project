@@ -316,6 +316,7 @@ def draw_governor_panel(
     screen,
     font,
     governor,
+    faction=None,
 ):
 
     width = 330
@@ -340,12 +341,84 @@ def draw_governor_panel(
         HIGHLIGHT,
     )
 
+    # 통치자가 없는 도시
+    if governor is None:
+        draw_centered_text(
+            screen,
+            font,
+            "통치자 없음",
+            (x, y + 150, width, 40),
+            MUTED,
+        )
+        return
+
     draw_centered_text(
         screen,
         font,
-        governor,
-        (x, y + 100, width, 50),
+        governor["name"],
+        (x, y + 60, width, 40),
+        HIGHLIGHT,
     )
+
+    faction_text = faction if faction is not None else "없음"
+
+    rows = [
+        ("세력", faction_text),
+        ("통솔", governor["leadership"]),
+        ("무력", governor["war"]),
+        ("지력", governor["intelligence"]),
+        ("정치", governor["politics"]),
+        ("매력", governor["charisma"]),
+    ]
+
+    text_y = y + 120
+
+    for label, value in rows:
+        draw_text(
+            screen,
+            font,
+            f"{label} : {value}",
+            x + 75,
+            text_y,
+        )
+        text_y += 42
+
+
+def draw_info_menu(
+    screen,
+    font,
+    city,
+    governor,
+    faction,
+):
+    """현재 도시와 통치자의 상세 정보를 표시한다."""
+
+    draw_city_panel(
+        screen,
+        font,
+        city,
+    )
+
+    draw_governor_panel(
+        screen,
+        font,
+        governor,
+        faction,
+    )
+
+    draw_centered_text(
+        screen,
+        font,
+        "Enter / ESC : 돌아가기",
+        (
+            UI_MARGIN,
+            525,
+            screen.get_width() - UI_MARGIN * 2,
+            30,
+        ),
+        MUTED,
+    )
+
 
 # ==============================
 # 메인 명령 메뉴
