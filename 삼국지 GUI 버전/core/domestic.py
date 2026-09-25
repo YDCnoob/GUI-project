@@ -1,5 +1,5 @@
 
-from constants import BASE_GROWTH_RATE
+from .constants import BASE_GROWTH_RATE
 
 def dev_agri(city, ap):
     if ap <= 0:

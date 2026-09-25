@@ -1,5 +1,5 @@
 
-from domestic import (
+from .domestic import (
     produce_food,
     consume_food,
     decrease_order,

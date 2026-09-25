@@ -1,11 +1,10 @@
 import pygame
 import ui
-import city
-import constants
-import domestic
-import turn
-import military
-import officer
+from core import city
+from core import constants
+from core import officer
+
+import main
 
 # ==============================
 # pygame 초기화
@@ -286,40 +285,13 @@ while running:
 
                     elif selected_item == "턴 종료":
 
-                        total_food = 0
-                        total_tax = 0
-                        total_population = 0
-
-                        for city_data in city.cities:
-                            city_faction = officer.get_city_faction(city_data)
-
-                            # 플레이어 소유 도시만 처리
-                            if city_faction == PLAYER_FACTION:
-                                result = turn.process_city_turn(city_data)
-                                total_food += result["food_production"]
-                                total_tax += result["tax_income"]
-                                total_population += result["population_gain"]
-
-                                # 전체 행동 초기화
-                                city_data["recruited_this_turn"] = False
-                                city_data["trained_this_turn"] = False
-                                city_data["sortied_this_turn"] = False
-                                city_data["moved_this_turn"] = False
-
-                                # 도시별 행동력 회복
-                                city_data["ap"] = constants.MAX_AP
-
-                        # 날짜는 딱 한 번만 변경
-                        year, month = turn.end_turn(year, month)
-
-                        popup_message = (
-                            f"{year}년 {month}월\n"
-                            f"전체 식량 생산 "
-                            f"+{total_food:,}\n"
-                            f"전체 세금 수입 "
-                            f"+{total_tax:,}\n"
-                            f"전체 인구 변화 "
-                            f"{total_population:+,}"
+                        year, month, popup_message = (
+                            main.turn_handler.handle_end_turn(
+                                city.cities,
+                                PLAYER_FACTION,
+                                year,
+                                month,
+                            )
                         )
 
             # ==============================
@@ -327,25 +299,16 @@ while running:
             # ==============================
 
             elif current_menu == "governor_select":
-
-                if event.key == pygame.K_UP:
-                    selected_governor -= 1
-                    selected_governor %= len(governor_candidates)
-
-                elif event.key == pygame.K_DOWN:
-                    selected_governor += 1
-                    selected_governor %= len(governor_candidates)
-
-                elif event.key == pygame.K_RETURN:
-                    new_governor = governor_candidates[selected_governor]
-                    conquered_city["governor"] = (new_governor["name"])
-
-                    popup_message = (
-                        "통치자 임명 완료\n"
-                        f"{conquered_city['name']} : "
-                        f"{new_governor['name']}"
-                    )
-                    current_menu = "main"
+                (
+                    current_menu,
+                    selected_governor,
+                    popup_message,
+                ) = main.city_select.handle_governor_select(
+                    event,
+                    governor_candidates,
+                    selected_governor,
+                    conquered_city,
+                )
 
             # ==============================
             # 도시 선택
@@ -353,661 +316,170 @@ while running:
 
             elif current_menu == "city_select":
 
-                # 이전 도시
-                if event.key == pygame.K_LEFT:
-
-                    selected_city -= 1
-                    selected_city %= len(city.cities)
-
-                    current_city = city.cities[
-                        selected_city
-                    ]
-
-                # 다음 도시
-                elif event.key == pygame.K_RIGHT:
-
-                    selected_city += 1
-                    selected_city %= len(city.cities)
-
-                    current_city = city.cities[
-                        selected_city
-                    ]
-
-                # 선택 완료
-                elif event.key == pygame.K_RETURN:
-
-                    current_menu = "main"
-
-                # 돌아가기
-                elif event.key == pygame.K_ESCAPE:
-
-                    current_menu = "main"
-
+                (
+                    current_menu,
+                    current_city,
+                    selected_city,
+                ) = main.city_select.handle_city_select(
+                    event,
+                    city.cities,
+                    current_city,
+                    selected_city,
+                )
 
             # ==============================
-            # 내정 메뉴
+            # 내정 선택
             # ==============================
-
+            
             elif current_menu == "domestic":
-
-                # 위
-                if event.key == pygame.K_UP:
-                    selected_domestic -= 1
-                    selected_domestic %= len(domestic_items)
-
-                # 아래
-                elif event.key == pygame.K_DOWN:
-                    selected_domestic += 1
-                    selected_domestic %= len(domestic_items)
-
-                # ESC
-                elif event.key == pygame.K_ESCAPE:
-                    current_menu = "main"
-
-                # Enter
-                elif event.key == pygame.K_RETURN:
-
-                    selected_item = domestic_items[
-                        selected_domestic
-                    ]
-
-                    # ======================
-                    # 농업 개발
-                    # ======================
-
-                    if selected_item == "농업 개발":
-
-                        current_city["ap"], cost, gain = (
-                            domestic.dev_agri(
-                                current_city,
-                                current_city["ap"],
-                            )
-                        )
-
-                        if gain > 0:
-
-                            popup_message = (
-                                "농업 개발 완료\n"
-                                f"금 -{cost:,}\n"
-                                f"농업 +{gain}"
-                            )
-
-                        else:
-
-                            popup_message = (
-                                "농업 개발 실패\n"
-                                "실행할 수 없습니다."
-                            )
-
-                    # ======================
-                    # 상업 개발
-                    # ======================
-
-                    elif selected_item == "상업 개발":
-
-                        current_city["ap"], cost, gain = (
-                            domestic.dev_commerce(
-                                current_city,
-                                current_city["ap"],
-                            )
-                        )
-
-                        if gain > 0:
-
-                            popup_message = (
-                                "상업 개발 완료\n"
-                                f"금 -{cost:,}\n"
-                                f"상업 +{gain}"
-                            )
-
-                        else:
-
-                            popup_message = (
-                                "상업 개발 실패\n"
-                                "실행할 수 없습니다."
-                            )
-
-                    # ======================
-                    # 치안 강화
-                    # ======================
-
-                    elif selected_item == "치안 강화":
-
-                        current_city["ap"], cost, gain = (
-                            domestic.improve_order(
-                                current_city,
-                                current_city["ap"],
-                            )
-                        )
-
-                        if gain > 0:
-
-                            popup_message = (
-                                "치안 강화 완료\n"
-                                f"금 -{cost:,}\n"
-                                f"치안 +{gain}"
-                            )
-
-                        else:
-
-                            popup_message = (
-                                "치안 강화 실패\n"
-                                "실행할 수 없습니다."
-                            )
-
-                    # ======================
-                    # 돌아가기
-                    # ======================
-
-                    elif selected_item == "돌아가기":
-
-                        current_menu = "main"
-
+                (
+                    current_menu,
+                    selected_domestic,
+                    popup_message
+                ) = main.domestic_menu.handle_domestic_menu(
+                    event,
+                    current_city,
+                    domestic_items,
+                    selected_domestic
+                )
 
             # ==============================
             # 군사 메뉴
             # ==============================
 
             elif current_menu == "military":
-
-                # 위
-                if event.key == pygame.K_UP:
-                    selected_military -= 1
-                    selected_military %= len(military_items)
-
-                # 아래
-                elif event.key == pygame.K_DOWN:
-                    selected_military += 1
-                    selected_military %= len(military_items)
-
-                # ESC
-                elif event.key == pygame.K_ESCAPE:
-                    current_menu = "main"
-
-                # Enter
-                elif event.key == pygame.K_RETURN:
-
-                    selected_item = military_items[
-                        selected_military
-                    ]
-
-                    # ======================
-                    # 모병
-                    # ======================
-
-                    if selected_item == "모병":
-
-                        if current_city[
-                            "recruited_this_turn"
-                        ]:
-
-                            popup_message = (
-                                "모병 실패\n"
-                                "이번 턴에는 이미 모병했습니다."
-                            )
-
-                        else:
-
-                            recruit_count = 0
-                            recruit_count_input = ""
-                            current_menu = "recruit"
-
-                    # ======================
-                    # 훈련
-                    # ======================
-
-                    elif selected_item == "훈련":
-
-                        if current_city[
-                            "trained_this_turn"
-                        ]:
-
-                            popup_message = (
-                                "훈련 실패\n"
-                                "이번 턴에는 이미 훈련했습니다."
-                            )
-
-                        else:
-
-                            cost, gain = military.train_army(
-                                current_city
-                            )
-
-                            if gain > 0:
-
-                                current_city[
-                                    "trained_this_turn"
-                                ] = True
-
-                                popup_message = (
-                                    "훈련 완료\n"
-                                    f"금 -{cost:,}\n"
-                                    f"훈련도 +{gain}"
-                                )
-
-                            else:
-
-                                popup_message = (
-                                    "훈련 실패\n"
-                                    "훈련할 수 없습니다."
-                                )
-
-                    # ======================
-                    # 출진
-                    # ======================
-
-                    elif selected_item == "출진":
-                        if current_city["sortied_this_turn"]:
-                            popup_message = (
-                                "출진 불가\n"
-                                "이번 턴에 이미 출정 했습니다."
-                            )
-
-                        else:
-                            neighbors = city.get_neighbor_cities(current_city)
-                            sortie_targets = []
-
-                            for target_city in neighbors:
-                                target_faction = (officer.get_city_faction(target_city))
-
-                                # 같은 세력 도시는 공격 대상 제외
-                                if target_faction != PLAYER_FACTION:
-                                    sortie_targets.append(target_city)
-
-                            if not sortie_targets:
-                                popup_message = (
-                                    "출진 불가\n"
-                                    "공격 가능한 인접 도시가 없습니다"
-                                )
-                            else:
-                                selected_sortie_target = 0
-                                current_menu = "sortie_target"
-
-                    # ======================
-                    # 병력 이동
-                    # ======================
-
-                    elif selected_item == "병력 이동":
-                        if current_city["moved_this_turn"]:
-                            popup_message = (
-                                "병력 이동 불가\n"
-                                "이번 턴에는 이미 병력을 이동 했습니다."
-                            )
-                        else:
-                            neighbors = city.get_neighbor_cities(current_city)
-
-                            transport_targets = []
-                            for target_city in neighbors:
-                                target_faction = (officer.get_city_faction(target_city))
-
-                                # 같은 세력 도시만 이동 가능
-                                if target_faction == PLAYER_FACTION:
-                                    transport_targets.append(target_city)
-
-                            if not transport_targets:
-                                popup_message = (
-                                    "병력 이동 불가\n"
-                                    "인접한 아군 도시가 없습니다."
-                                )
-                            else:
-                                selected_transport_target = 0
-                                current_menu = "transport_target"
-
-                    # ======================
-                    # 돌아가기
-                    # ======================
-
-                    elif selected_item == "돌아가기":
-
-                        current_menu = "main"
-
+                (
+                    current_menu,
+                    selected_military,
+                    popup_message,
+                    recruit_count,
+                    recruit_count_input,
+                    sortie_targets,
+                    selected_sortie_target,
+                    transport_targets,
+                    selected_transport_target,
+                ) = main.military_menu.handle_military_menu(
+                    event=event,
+                    current_city=current_city,
+                    military_items=military_items,
+                    selected_military=selected_military,
+                    player_faction=PLAYER_FACTION,
+                    recruit_count=recruit_count,
+                    recruit_count_input=recruit_count_input,
+                    sortie_targets=sortie_targets,
+                    selected_sortie_target=selected_sortie_target,
+                    transport_targets=transport_targets,
+                    selected_transport_target=selected_transport_target,
+                )
 
             # ==============================
             # 모병 수량 선택
             # ==============================
 
             elif current_menu == "recruit":
-                # 숫자 직접 입력
-                if pygame.K_0 <= event.key <= pygame.K_9:
-                    recruit_count_input += event.unicode
-                    if recruit_count_input:
-                        recruit_count = int(recruit_count_input)
-                # 한 자리 삭제
-                elif event.key == pygame.K_BACKSPACE:
-                    recruit_count_input = (recruit_count_input[:-1])
-
-                    if recruit_count_input:
-                        recruit_count = int(recruit_count_input)
-                    else:
-                        recruit_count = 0
-
-                # 100명 감소
-                if event.key == pygame.K_LEFT:
-
-                    recruit_count -= 100
-
-                    if recruit_count < 100:
-                        recruit_count = 100
-
-                # 100명 증가
-                elif event.key == pygame.K_RIGHT:
-
-                    recruit_count += 100
-
-                # 취소
-                elif event.key == pygame.K_ESCAPE:
-
-                    current_menu = "military"
-
-                # 모병 실행
-                elif event.key == pygame.K_RETURN:
-
-                    cost, recruited = military.recruit(
-                        current_city,
-                        recruit_count,
-                    )
-
-                    if recruited > 0:
-
-                        current_city[
-                            "recruited_this_turn"
-                        ] = True
-
-                        popup_message = (
-                            "모병 완료\n"
-                            f"병력 +{recruited:,}\n"
-                            f"식량 -{cost:,}"
-                        )
-
-                        current_menu = "military"
-
-                    else:
-
-                        popup_message = (
-                            "모병 실패\n"
-                            "모병할 수 없습니다."
-                        )
+                (
+                    current_menu,
+                    recruit_count,
+                    recruit_count_input,
+                    popup_message,
+                ) = main.military_menu.handle_recruit_menu(
+                    event=event,
+                    current_city=current_city,
+                    recruit_count=recruit_count,
+                    recruit_count_input=recruit_count_input,
+                )
 
             # ==============================
             # 출진 대상 선택
             # ==============================
+
             elif current_menu == "sortie_target":
-
-                # 위
-                if event.key == pygame.K_UP:
-
-                    selected_sortie_target -= 1
-                    selected_sortie_target %= len(sortie_targets)
-
-                # 아래
-                elif event.key == pygame.K_DOWN:
-
-                    selected_sortie_target += 1
-                    selected_sortie_target %= len(
-                    sortie_targets
+                (
+                    current_menu,
+                    selected_sortie_target,
+                    sortie_target_city,
+                    sortie_troops,
+                    popup_message,
+                ) = main.military_menu.handle_sortie_target(
+                    event=event,
+                    current_city=current_city,
+                    sortie_targets=sortie_targets,
+                    selected_sortie_target=selected_sortie_target,
+                    sortie_target_city=sortie_target_city,
+                    sortie_troops=sortie_troops,
                 )
-
-                # 취소
-                elif event.key == pygame.K_ESCAPE:
-
-                    current_menu = "military"
-
-                # 대상 결정
-                elif event.key == pygame.K_RETURN:
-
-                    sortie_target_city = sortie_targets[selected_sortie_target]
-
-                    if current_city["troops"] < 100:
-                        popup_message = (
-                            "출진 불가\n"
-                            "출진할 병력이 부족합니다."
-                        )
-
-                        current_menu = "military"
-
-                    else:
-                        sortie_troops = 100
-                        current_menu = "sortie_troops"
 
             # ==============================
             # 출진 병력 선택
             # ==============================
 
             elif current_menu == "sortie_troops":
-                # 숫자 직접 입력
-                if pygame.K_0 <= event.key <= pygame.K_9:
-                    number = event.unicode
-                    sortie_troops_input += number
-                    if sortie_troops_input:
-                        sortie_troops = int(sortie_troops_input)
-
-                    # 현재 도시 병력보다 많으면 제한
-                    if sortie_troops > current_city["troops"]:
-                        sortie_troops = current_city["troops"]
-                        sortie_troops_input = str(sortie_troops)
-
-                # 한 자리 삭제
-                elif event.key == pygame.K_BACKSPACE:
-                    sortie_troops_input = (sortie_troops_input[:-1])
-                    if sortie_troops_input:
-                        sortie_troops = int(sortie_troops_input)
-                    else:
-                        sortie_troops = 0
-
-                # 100명 감소
-                if event.key == pygame.K_LEFT:
-                    sortie_troops -= 100
-                    if sortie_troops < 100:
-                        sortie_troops = 100
-
-                # 100명 증가
-                elif event.key == pygame.K_RIGHT:
-                    sortie_troops += 100
-                    if sortie_troops > current_city["troops"]:
-                        sortie_troops = current_city["troops"]
-
-                 # 취소
-                elif event.key == pygame.K_ESCAPE:
-                    current_menu = "sortie_target"
-
-                # 결정
-                elif event.key == pygame.K_RETURN:
-                    if sortie_troops < 100:
-                        popup_message = (
-                            "출진 불가\n"
-                            "최소 100명 이상 입력하십시오."
-                        )
-
-                    # 100명 단위 검사
-                    elif sortie_troops % 100 != 0:
-                        popup_message = (
-                            "출진 불가\n"
-                            "병력은 100명 단위로 입력하십시오."
-                        )
-                    else:
-                        result = military.battle(
-                            sortie_target_city,
-                            sortie_troops
-                        )
-
-                        # 출진 병력은 일단 출진 도시에서 빠짐.
-                        current_city["troops"] -= sortie_troops
-                    
-                        # 승리
-                        if result["result"] == "win":
-
-                            # 살아 남은 병력이 공격 도시 주둔
-                            sortie_target_city["troops"] = (result["remaining_troops"])
-
-                            # 점령 처리
-                            governor_candidates = (officer.get_available_governors(city.cities, PLAYER_FACTION))
-
-                            conquered_city = sortie_target_city
-                            conquered_city["ap"] = 0
-                            selected_governor = 0
-
-                            current_city["sortied_this_turn"] = True
-
-                            popup_message = (
-                                "전투 승리!\n"
-                                f"{sortie_target_city['name']} 점령!"
-                            )
-                            current_menu = "governor_select"
-                        
-                        # 패배
-                        else:
-                            # 살아남은 병력은 출발 도시로 복귀
-                            current_city["troops"] += result["remaining_troops"]
-                            current_city["sortied_this_turn"] = True
-
-                            popup_message = (
-                                "전투 패배\n"
-                                f"공격군 피해 : "
-                                f"{result['attacker_loss']:,}명\n"
-                                f"방어군 피해 : "
-                                f"{result['defender_loss']:,}명"
-                            )
-                            current_menu = "military"
+                (
+                    current_menu,
+                    sortie_troops,
+                    sortie_troops_input,
+                    popup_message,
+                    governor_candidates,
+                    conquered_city,
+                    selected_governor,
+                ) = main.military_menu.handle_sortie_troops(
+                    event=event,
+                    current_city=current_city,
+                    sortie_target_city=sortie_target_city,
+                    sortie_troops=sortie_troops,
+                    sortie_troops_input=sortie_troops_input,
+                    cities=city.cities,
+                    player_faction=PLAYER_FACTION,
+                    governor_candidates=governor_candidates,
+                    conquered_city=conquered_city,
+                    selected_governor=selected_governor,
+                )
 
             # ==============================
             # 이송 병력 선택
             # ==============================
+
             elif current_menu == "transport_target":
-
-                # 위
-                if event.key == pygame.K_UP:
-                    selected_transport_target -= 1
-                    selected_transport_target %= len(
-                    transport_targets
+                (
+                    current_menu,
+                    selected_transport_target,
+                    transport_target_city,
+                    move_troops,
+                    move_troops_input,
+                    popup_message,
+                ) = main.military_menu.handle_transport_target(
+                    event=event,
+                    current_city=current_city,
+                    transport_targets=transport_targets,
+                    selected_transport_target=selected_transport_target,
+                    transport_target_city=transport_target_city,
+                    move_troops=move_troops,
+                    move_troops_input=move_troops_input,
                 )
 
-                # 아래
-                elif event.key == pygame.K_DOWN:
-                    selected_transport_target += 1
-                    selected_transport_target %= len(
-                    transport_targets
-                )
-
-                # 취소
-                elif event.key == pygame.K_ESCAPE:
-                    current_menu = "military"
-
-                # 대상 결정
-                elif event.key == pygame.K_RETURN:
-                    transport_target_city = (transport_targets[selected_transport_target])
-
-                    if current_city["troops"] < 100:
-                        popup_message = (
-                            "병력 이동 불가\n"
-                            "이동할 병력이 부족합니다."
-                        )   
-                        current_menu = "military"
-                    else:
-                        move_troops = 0
-                        move_troops_input = ""
-                        current_menu = "transport_troops"
             # ==============================
             # 이송 병력 수 선택
             # ==============================
 
             elif current_menu == "transport_troops":
-
-                # 숫자 직접 입력
-                if pygame.K_0 <= event.key <= pygame.K_9:
-                    move_troops_input += event.unicode
-                    if move_troops_input:
-                        move_troops = int(
-                        move_troops_input
-                    )
-
-                    # 현재 병력보다 많이 입력하면 제한
-                    if move_troops > current_city["troops"]:
-                        move_troops = current_city["troops"]
-                        move_troops_input = str(
-                            move_troops
-                        )
-
-                # 한 자리 삭제
-                elif event.key == pygame.K_BACKSPACE:
-                    move_troops_input = (move_troops_input[:-1])
-                    if move_troops_input:
-                        move_troops = int(
-                        move_troops_input
-                        )
-
-                    else:
-                        move_troops = 0
-
-                # 100명 감소
-                elif event.key == pygame.K_LEFT:
-                    move_troops -= 100
-
-                    if move_troops < 100:
-                        move_troops = 100   
-                    move_troops_input = str(move_troops)
-
-                # 100명 증가
-                elif event.key == pygame.K_RIGHT:
-                    move_troops += 100
-
-                    if move_troops > current_city["troops"]:
-                        move_troops = current_city["troops"]
-
-                    move_troops_input = str(move_troops)
-
-                # 취소
-                elif event.key == pygame.K_ESCAPE:
-                    current_menu = "transport_target"
-
-                # 병력 이동 실행
-                elif event.key == pygame.K_RETURN:
-                    if move_troops < 100:
-                        popup_message = (
-                            "병력 이동 불가\n"
-                            "최소 100명부터 가능합니다."
-                        )
-
-                    elif move_troops % 100 != 0:
-                        popup_message = (
-                            "병력 이동 불가\n"
-                            "병력은 100명 단위로 입력하십시오."
-                        )
-
-                    else:
-                        success = military.transport_troops(
-                            current_city,
-                            transport_target_city,
-                            move_troops,
-                        )
-
-                        if success:
-                            current_city["moved_this_turn"] = True
-
-                            popup_message = (
-                                "병력 이동 완료\n"
-                                f"{current_city['name']} → "
-                                f"{transport_target_city['name']}\n"
-                                f"{move_troops:,}명 이동"
-                            )
-
-                            current_menu = "military"
-
-                        else:
-                            popup_message = (
-                                "병력 이동 실패\n"
-                                "병력을 이동할 수 없습니다."
-                            )
-
-
+                (
+                    current_menu,
+                    move_troops,
+                    move_troops_input,
+                    popup_message,
+                ) = main.military_menu.handle_transport_troops(
+                    event=event,
+                    current_city=current_city,
+                    transport_target_city=transport_target_city,
+                    move_troops=move_troops,
+                    move_troops_input=move_troops_input,
+                )
 
     # ==============================
     # 2. 화면 그리기
     # ==============================
 
-    ui.draw_background(
-        screen
-    )
-
+    ui.draw_background(screen)
 
     # ==============================
     # 상단 정보
@@ -1057,7 +529,6 @@ while running:
             menu_items,
             selected_menu,
         )
-
 
     # ==============================
     # 내정 메뉴
@@ -1223,7 +694,6 @@ while running:
     # ==============================
 
     clock.tick(60)
-
 
 # ==============================
 # pygame 종료

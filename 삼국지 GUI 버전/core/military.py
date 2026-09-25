@@ -1,5 +1,5 @@
 
-from constants import (RECRUIT_COST, TRAIN_COST_PER_100, TRAIN_GAIN, MAX_TRAINING,)
+from .constants import (RECRUIT_COST, TRAIN_COST_PER_100, TRAIN_GAIN, MAX_TRAINING,)
 
 def recruit(city, recruit_count=None):
     print("==============================")
